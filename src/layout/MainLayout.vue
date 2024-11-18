@@ -40,8 +40,21 @@
               <Expand v-else />
             </el-icon>
           </el-button>
+         </div>
+        <div class="header-center">
+      <span class="character-name">Executive coach</span>
         </div>
-        <CharacterInfo />
+      <div class="header-right">
+      <el-button
+        type="text"
+        class="more-btn"
+        @click="toggleCharacterInfo"
+      >
+        <el-icon><MoreFilled /></el-icon>
+      </el-button>
+      </div>
+       
+
       </el-header>
 
       <!-- 聊天窗口 -->
@@ -49,17 +62,29 @@
         <ChatWindow />
       </el-main>
     </el-container>
+        <CharacterInfo
+      v-model:visible="isCharacterInfoVisible"
+      width="300px"
+    />
   </el-container>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { Setting, Fold, Expand } from '@element-plus/icons-vue'
+import { Setting, Fold, MoreFilled,Expand } from '@element-plus/icons-vue'
 import ChatList from '../components/ChatList.vue'
 import ChatWindow from '../components/ChatWindow.vue'
+import CharacterInfo from "../components/CharacterInfo.vue"
 
-const isCollapse = ref(false)
 
+const isCollapse = ref(true)
+const isCharacterInfoVisible = ref(false)
+
+const toggleCharacterInfo = (e) => {
+  e.stopPropagation()
+  console.log(isCharacterInfoVisible.value)
+  isCharacterInfoVisible.value = !isCharacterInfoVisible.value
+}
 const toggleSidebar = (e) => {
   console.log(isCollapse.value)
   e.stopPropagation()
@@ -71,10 +96,17 @@ const handleNewChat = () => {
   console.log('新建对话')
 }
 const handleMainClick = () => {
+  console.log(isCharacterInfoVisible.value)
   // 仅在小屏幕下自动收起侧边栏
   if (window.innerWidth <= 768 && !isCollapse.value) {
     isCollapse.value = true
+    
   }
+  if (window.innerWidth <= 768 && isCharacterInfoVisible.value) {
+    isCharacterInfoVisible.value = false
+    
+  }
+  
 }
 </script>
 
@@ -134,25 +166,11 @@ const handleMainClick = () => {
   background-color: #fff;
 }
 
-.main-header {
-  border-bottom: 1px solid #e6e6e6;
-  background-color: #fff;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 200px;
-}
 
 .toggle-sidebar-btn {
   padding: 8px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
@@ -169,5 +187,54 @@ const handleMainClick = () => {
   padding: 0;
   height: calc(100vh - 60px);
   overflow-y: auto;
+}
+.main-header {
+  border-bottom: 1px solid #e6e6e6;
+  background-color: #fff;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 200px; /* 固定宽度确保中间标题居中 */
+}
+
+.header-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.character-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.header-right {
+  width: 200px; /* 与左侧相同宽度保持对称 */
+  display: flex;
+  justify-content: flex-end;
+}
+
+.toggle-sidebar-btn {
+  padding: 8px;
+  color: #606266;
+}
+
+.more-btn {
+  padding: 8px;
+  color: #606266 !important; /* 设置一个可见的颜色 */
+}
+
+.more-btn:hover, .toggle-sidebar-btn:hover {
+  background-color: #f5f7fa;
+  border-radius: 4px;
 }
 </style>

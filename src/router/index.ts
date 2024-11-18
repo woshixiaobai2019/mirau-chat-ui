@@ -1,8 +1,18 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
-
-const routes: Array<RouteRecordRaw> = [
-
+import MainLayoutVue from '@/layout/MainLayout.vue'
+const routes = [
+  {
+    path: '/',
+    component: MainLayoutVue,
+    children: [
+      {
+        path: 'chat/:id?',
+        name: 'Chat',
+        component: () => import('@/views/ChatView.vue')
+      }
+    ]
+  }
 ]
 
 const router = createRouter({

@@ -44,10 +44,10 @@
                     <el-icon><Top /></el-icon>
                     置顶对话
                   </el-dropdown-item>
-                  <el-dropdown-item command="archive">
+                  <!-- <el-dropdown-item command="archive">
                     <el-icon><Box /></el-icon>
                     归档对话
-                  </el-dropdown-item>
+                  </el-dropdown-item> -->
                   <el-dropdown-item command="delete" divided>
                     <el-icon><Delete /></el-icon>
                     <span class="text-red-500">删除对话</span>
@@ -97,7 +97,7 @@ const chatList = ref([
 ])
 
 const currentChatId = ref(1)
-const searchQuery = ref('')
+// const searchQuery = ref('')
 // 新增的状态
 const showNewChatDialog = ref(false)
 
@@ -109,11 +109,6 @@ const handleNewChat = (data) => {
 // 过滤和排序聊天列表
 const filteredChats = computed(() => {
   return chatList.value
-    .filter(chat => {
-      if (!searchQuery.value) return true
-      return chat.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-             chat.lastMessage.toLowerCase().includes(searchQuery.value.toLowerCase())
-    })
     .sort((a, b) => {
       // 置顶的排在前面
       if (a.pinned && !b.pinned) return -1
@@ -136,9 +131,6 @@ const handleCommand = async (command, chat) => {
       ElMessage.success(`${chat.pinned ? '已置顶' : '已取消置顶'}对话`)
       break
       
-    case 'archive':
-      ElMessage.success('已归档对话')
-      break
       
     case 'delete':
       try {

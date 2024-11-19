@@ -1,7 +1,7 @@
 <template>
   <div class="chat-list-container">
     <!-- 搜索框 -->
-    <div class="search-container">
+    <!-- <div class="search-container">
       <el-input
         v-model="searchQuery"
         placeholder="搜索对话"
@@ -9,17 +9,13 @@
         clearable
         size="small"
       />
-    </div>
-
+    </div> -->
+  <el-button class="new-chat-item" @click="showNewChatDialog = true" :icon="Plus" type="primary">新建对话</el-button>
     <!-- 聊天列表 -->
     <div class="chat-items">
       <!-- 新对话按钮 -->
-      <div class="new-chat-item" @click="showNewChatDialog = true">
-        <el-icon class="new-chat-icon"><Plus /></el-icon>
-        <span>新建对话</span>
-      </div>
 
-      <el-divider />
+      
       <TransitionGroup name="list">
         <div
           v-for="chat in filteredChats"
@@ -78,7 +74,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Search, MoreFilled, Top, Box, Delete } from '@element-plus/icons-vue'
+import { Search, MoreFilled, Top, Box, Delete,Plus} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import NewChatDialog from './NewChat.vue'
 // 模拟的聊天数据
@@ -184,6 +180,9 @@ const handleCommand = async (command, chat) => {
   flex: 1;
   overflow-y: auto;
   padding: 8px 0;
+}
+.new-chat-item {
+  margin-bottom: 0.3rem;
 }
 
 .chat-item {

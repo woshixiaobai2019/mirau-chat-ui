@@ -47,7 +47,7 @@
         <el-icon 
           class="nav-icon" 
           :class="{ 'disabled': currentIndex <= 1 }"
-          @click="currentIndex > 1 && handlePrevious"
+          @click="handlePrevious"
         >
           <ArrowLeft />
         </el-icon>
@@ -57,17 +57,17 @@
         <el-icon 
           class="nav-icon"
           :class="{ 'disabled': currentIndex >= messages.length }"
-          @click="currentIndex < messages.length && handleNext"
+          @click="handleNext"
         >
           <ArrowRight />
         </el-icon>
       </div>
       
-      <el-rate
+      <!-- <el-rate
         v-model="rating"
         :max="4"
         @change="handleRating"
-      />
+      /> -->
     </div>
   </div>
 </template>
@@ -127,6 +127,8 @@ const handlePrevious = () => {
 }
 
 const handleNext = () => {
+    console.log(props.currentIndex)
+    console.log(props.messages.length)
   emit('next')
 }
 

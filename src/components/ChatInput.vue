@@ -50,7 +50,7 @@ onMounted(() => {
 
 <style scoped>
 .chat-input-area {
-  padding: 12px 16px;
+  padding: 10px 12px;
   background-color: #f5f5f5;
   border-top: 1px solid #e0e0e0;
 }

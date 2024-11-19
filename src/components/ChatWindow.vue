@@ -52,7 +52,7 @@
       </div>
     </div>
 
-    <chat-input @send-message="sendMessage" />
+    <chat-input @send-message="sendMessage"/>
   </div>
 </template>
 
@@ -88,6 +88,7 @@ const handlePrevious = () => {
 }
 
 const handleNext = () => {
+    console.log("handle next")
   if (currentAssistantIndex.value < assistantMessages.value.length) {
     currentAssistantIndex.value++
   }

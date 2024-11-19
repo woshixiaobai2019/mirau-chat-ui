@@ -1,60 +1,112 @@
 <template>
   <div class="chat-window-wrapper">
     <div class="message-list">
-      <MessageBubble
-        v-for="message in messages"
-        :key="message.id"
-        :message="message"
-        :is-current-user="message.userId === currentUserId"
-        @retry="retryMessage(message)"
-      />
+            <MessageBubble
+      :messages="userMessages"
+      :isUser="true"
+      avatar="/path/to/user-avatar.jpg"
+      roleTag="user"
+      :currentIndex="1"
+      @moreActions="handleMoreActions"
+    />
+    <MessageBubble
+      :messages="assistantMessages"
+      :isUser="false"
+      avatar="/path/to/assistant-avatar.jpg"
+      roleTag="c.ai"
+      :isLatestAssistantMessage="false"
+      :currentIndex="currentAssistantIndex"
+      @regenerate="handleRegenerate"
+      @previous="handlePrevious"
+      @next="handleNext"
+      @moreActions="handleMoreActions"
+      @rateMessage="handleRating"
+    />
+                <MessageBubble
+      :messages="userMessages"
+      :isUser="true"
+      avatar="/path/to/user-avatar.jpg"
+      roleTag="user"
+      :currentIndex="1"
+      @moreActions="handleMoreActions"
+    />
+    <MessageBubble
+      :messages="assistantMessages"
+      :isUser="false"
+      avatar="/path/to/assistant-avatar.jpg"
+      roleTag="c.ai"
+      :isLatestAssistantMessage="true"
+      :currentIndex="currentAssistantIndex"
+      @regenerate="handleRegenerate"
+      @previous="handlePrevious"
+      @next="handleNext"
+      @moreActions="handleMoreActions"
+      @rateMessage="handleRating"
+    />
+    
+
       <div class="typing-indicator" v-if="isTyping">
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
       </div>
     </div>
-    <div class="input-area">
-      <el-input
-        v-model="inputMessage"
-        placeholder="输入您的消息..."
-        @keyup.enter="sendMessage"
-        :disabled="isTyping"
-      />
-      <el-button type="primary" @click="sendMessage" :disabled="isTyping">
-        发送
-      </el-button>
-    </div>
+
+    <chat-input @send-message="sendMessage" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import MessageBubble from './MessageBubble.vue'
+import ChatInput from './ChatInput.vue'
 
-const currentUserId = 1 // 模拟当前用户ID
-const messages = ref([
-  { id: 1, userId: 1, content: '你好!', retryCount: 0 },
-  { id: 2, userId: 2, content: '你好,我是Executive coach,今天有什么需要帮助的吗?', retryCount: 0 },
-  { id: 3, userId: 1, content: '我想了解一下你的服务。', retryCount: 0 },
-  { id: 4, userId: 2, content: '当然,我很乐意为您提供帮助。我是一名专业的Executive coach,主要为高管提供咨询和辅导服务。', retryCount: 0 },
-  { id: 5, userId: 1, content: '听起来不错,我想预约一次咨询。', retryCount: 0 },
-  { id: 6, userId: 2, content: '好的,我会安排一次面谈。可以告诉我您方便的时间吗?', retryCount: 0 }
+
+// 模拟数据
+const assistantMessages = ref([
+  "I am Executive coach, how can I help you today",
+  "Let me provide you with some guidance on that topic...",
+  "Here's a detailed analysis of your situation...",
+  "Based on your goals, I would recommend..."
 ])
+
+const userMessages = ref([
+  "Hello, I need some advice about career development"
+])
+
+const currentAssistantIndex = ref(1)
+
+// 处理函数
+const handleRegenerate = () => {
+  console.log('Regenerating message...')
+}
+
+const handlePrevious = () => {
+  if (currentAssistantIndex.value > 1) {
+    currentAssistantIndex.value--
+  }
+}
+
+const handleNext = () => {
+  if (currentAssistantIndex.value < assistantMessages.value.length) {
+    currentAssistantIndex.value++
+  }
+}
+
+const handleMoreActions = () => {
+  console.log('Opening more actions menu...')
+}
+
+const handleRating = (value) => {
+  console.log('Rating:', value)
+}
 
 const isTyping = ref(false)
 const inputMessage = ref('')
 
-const sendMessage = () => {
-  if (inputMessage.value.trim()) {
-    messages.value.push({
-      id: messages.value.length + 1,
-      userId: currentUserId,
-      content: inputMessage.value,
-      retryCount: 0
-    })
-    inputMessage.value = ''
-  }
+const sendMessage = (message) => {
+  // 处理发送消息的逻辑
+  console.log('发送消息:', message)
 }
 
 const retryMessage = (message, direction) => {

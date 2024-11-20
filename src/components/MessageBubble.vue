@@ -26,7 +26,7 @@
             
             <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="edit" @click="testclick">
+              <el-dropdown-item command="edit">
                 <el-icon><EditPen /></el-icon>
                 <span>编辑消息</span>
               </el-dropdown-item>
@@ -225,7 +225,7 @@ const testclick = ()=>{
 // 打开编辑对话框
 const openEditDialog = () => {
   console.log(editDialogVisible.value)
-  editForm.value.content = props.messages[props.currentIndex - 1]
+  editForm.value.content = props.messages[props.currentIndex]
   editDialogVisible.value = true
 }
 
@@ -241,9 +241,9 @@ const confirmEdit = async () => {
   
   await editFormRef.value.validate((valid) => {
     if (valid) {
-      const newMessages = [...props.messages]
-      newMessages[props.currentIndex - 1] = editForm.value.content
-      emit('edit-message', newMessages)
+      console.log("new")
+      console.log(editForm.value.content)
+      emit('edit-message', editForm.value.content)
       editDialogVisible.value = false
       ElMessage.success('消息已更新')
     }

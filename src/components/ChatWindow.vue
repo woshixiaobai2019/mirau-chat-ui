@@ -16,7 +16,7 @@
             @previous="() => handlePrevious(group)"
             @next="() => handleNext(group)"
             @delete="() => handleDelete(group, groupIndex)"
-            @edit-message="(messageIndex, newContent) => handleEditMessage(group, messageIndex, newContent)"
+            @edit-message="(newContent) => handleEditMessage(group, groupIndex, newContent)"
           />
         </template>
       </template>
@@ -254,6 +254,7 @@ const sendMessage = async (content: string) => {
 
   // 处理消息编辑
   const handleEditMessage = async (group: ChatGroup, messageIndex: number, newContent: string) => {
+    console.log("handleEditMessage")
     if (!currentChat.value?.id) return;
     
     const message = group.messages[messageIndex];

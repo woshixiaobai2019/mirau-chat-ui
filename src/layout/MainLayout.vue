@@ -60,6 +60,8 @@
     <CharacterInfo
       v-model:visible="isCharacterInfoVisible"
       width="300px"
+      :characterConfig="currentChat.characterConfig"
+      @saveCharater="saveCharacter"
     />
   </div>
 </template>
@@ -72,12 +74,20 @@ import ChatWindow from '../components/ChatWindow.vue'
 import CharacterInfo from "../components/CharacterInfo.vue"
 import { useChatStore } from '../store'
 import { storeToRefs } from 'pinia';
+import { ElMessage } from 'element-plus'
 const chatStore = useChatStore();
 const { currentChat } = storeToRefs(chatStore);
+
 
 console.log(currentChat)
 const isCollapse = ref(true)
 const isCharacterInfoVisible = ref(false)
+
+const saveCharacter = async () => {
+  await chatStore.saveState()
+  isCharacterInfoVisible.value = false
+  ElMessage.success("Character updated successfully")
+}
 
 const toggleCharacterInfo = (e) => {
   e.stopPropagation()
@@ -96,7 +106,8 @@ const handleNewChat = () => {
   // TODO: 实现新建对话的逻辑
   console.log('新建对话')
 }
-const handleMainClick = () => {
+const handleMainClick = async() => {
+  console.log("click main")
   // 仅在小屏幕下自动收起侧边栏
   if (window.innerWidth <= 768 && !isCollapse.value) {
     isCollapse.value = true
@@ -104,6 +115,9 @@ const handleMainClick = () => {
   }
   if (window.innerWidth <= 768 && isCharacterInfoVisible.value) {
     isCharacterInfoVisible.value = false
+    console.log(currentChat)
+    await chatStore.saveState()
+    ElMessage.success("Character updated successfully")
     
   }
   

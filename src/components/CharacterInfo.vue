@@ -18,15 +18,24 @@
     <div class="drawer-content">
       <!-- 角色信息 -->
       <div class="character-profile">
-        <el-avatar
-          :size="80"
-          src="/api/placeholder/80/80"
-          class="character-avatar"
-        />
-        <h4>Executive coach</h4>
-        <p class="character-description">
-          I am Executive coach, how can I help you today?
-        </p>
+        <p class="section-title">Avatar</p>
+          <div class="avatar-wrapper" v-if="characterConfig.avatar" >
+            <el-avatar 
+              :size="60" 
+              :src="characterConfig.avatar"
+              class="uploaded-avatar"
+            />
+          </div>
+            <div class="upload-placeholder">
+            <el-input
+              v-model="characterConfig.avatar"
+              placeholder="请输入头像地址"
+              resize="none"
+              :maxlength="200"
+              show-word-limit
+            />
+        </div>
+        <h4>{{characterConfig.name}}</h4>
       </div>
 
       <!-- 对话设置 -->
@@ -37,10 +46,10 @@
         <div class="setting-item">
           <div class="setting-header">
             <span>Temperature</span>
-            <span class="setting-value">{{ temperature }}</span>
+            <span class="setting-value">{{ characterConfig.temperature }}</span>
           </div>
           <el-slider
-            v-model="temperature"
+            v-model="characterConfig.temperature"
             :min="0"
             :max="1"
             :step="0.1"
@@ -55,10 +64,10 @@
         <div class="setting-item">
           <div class="setting-header">
             <span>Top P</span>
-            <span class="setting-value">{{ topP }}</span>
+            <span class="setting-value">{{ characterConfig.topP }}</span>
           </div>
           <el-slider
-            v-model="topP"
+            v-model="characterConfig.topP"
             :min="0"
             :max="1"
             :step="0.1"
@@ -74,19 +83,29 @@
       <div class="system-prompt">
         <h5>System Prompt</h5>
         <el-input
-          v-model="systemPrompt"
+          v-model="characterConfig.systemPrompt"
           type="textarea"
           :rows="4"
           placeholder="Enter system prompt..."
+        />
+      </div>
+            <!-- 系统提示词 -->
+      <div class="system-prompt">
+        <h5>Model</h5>
+        <el-input
+          v-model="characterConfig.model"
+          :rows="1"
+          placeholder="Enter model name..."
         />
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, watch } from 'vue'
+<script setup lang=ts>
+import { ref, watch ,PropType} from 'vue'
 import { Close } from '@element-plus/icons-vue'
+import type { CharacterConfig } from '../types'
 
 const props = defineProps({
   visible: {
@@ -94,20 +113,28 @@ const props = defineProps({
     default: false
   },
   width: {
-    type: String,
+    type: String, 
     default: '300px'
+  },
+  characterConfig: {
+    type: Object as PropType<CharacterConfig>,
+    default: () => ({
+      model: "qwen2_5-instruct-14b",
+      systemPrompt: "You are a helpful assistant.",
+      temperature: 0.8,
+      topP: 0.7,
+      avatar: "https://a.520gexing.com/uploads/allimg/2021042109/uqaqhuvavt0.jpg",
+      name: "mirau"
+    })
   }
 })
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible',"saveCharater"])
 
-// 控制参数
-const temperature = ref(0.7)
-const topP = ref(0.9)
-const systemPrompt = ref('')
 
 const handleClose = () => {
-  emit('update:visible', false)
+  emit('update:visible', { visible: false})
+  emit("saveCharater")
 }
 
 // 监听可见性变化，可以在这里处理动画

@@ -343,8 +343,8 @@ export const useCharacterStore = defineStore('character', {
       
       try {
         const stateToSave: CharacterState = {
-          characters: this.characters,
-          currentCharacter: this.currentCharacter,
+          characters: JSON.parse(JSON.stringify(this.characters)),
+          currentCharacter:JSON.parse(JSON.stringify(this.currentCharacter)),
         };
         console.log('Saving character state:');
         console.log(stateToSave)

@@ -12,7 +12,7 @@
     <div class="sidebar" :class="{ 'collapsed': isCollapse }">
       <!-- 用户信息区域 -->
       <div class="user-info">
-        <el-avatar :size="32" src="/api/placeholder/32/32" />
+        <el-avatar :size="32" src="@/assets/logo.png" />
         <span class="username">Mirau</span>
       </div>
       
@@ -21,16 +21,38 @@
         <ChatList />
       </div>
       
-      <!-- 底部用户设置 -->
-      <div class="user-settings">
-        <el-dropdown>
-          <div class="settings-trigger">
-            <el-avatar :size="24" src="/api/placeholder/24/24" />
-            <span>mouse</span>
-            <el-icon><Setting /></el-icon>
-          </div>
-        </el-dropdown>
-      </div>
+    <div class="user-settings">
+      <el-dropdown trigger="click">
+        <div class="settings-trigger">
+          <el-avatar :size="24" src="@/assets/default-avatar.png" />
+          <span>mouse</span>
+          <el-icon><Setting /></el-icon>
+        </div>
+        
+        <template #dropdown>
+          <el-dropdown-menu>
+            <!-- 导出按钮 -->
+            <el-dropdown-item @click="handleExport">
+              <el-icon><Download /></el-icon>导出配置
+            </el-dropdown-item>
+            
+            <!-- 导入按钮 -->
+            <el-dropdown-item @click="triggerFileInput">
+              <el-icon><Upload /></el-icon>导入配置
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      
+      <!-- 隐藏的文件输入框 -->
+      <input
+        ref="fileInput"
+        type="file"
+        accept=".json"
+        style="display: none"
+        @change="handleFileImport"
+      >
+    </div>
     </div>
 
     <!-- 主容器 -->
@@ -66,7 +88,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { Setting, Fold, MoreFilled,Expand } from '@element-plus/icons-vue'
 import ChatList from '../components/ChatList.vue'
@@ -122,9 +144,56 @@ const handleMainClick = async() => {
   }
   
 }
+
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// 触发文件选择
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+// 处理文件导入
+const handleFileImport = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  
+  if (file) {
+    try {
+      await chatStore.importData(file)
+      ElMessage({
+        type: 'success',
+        message: '配置导入成功'
+      })
+    } catch (error) {
+      ElMessage({
+        type: 'error',
+        message: '配置导入失败：' + (error as Error).message
+      })
+    }
+    // 清除文件输入，允许重复导入同一文件
+    input.value = ''
+  }
+}
+
+// 处理导出
+const handleExport = async () => {
+  try {
+    await chatStore.exportData()
+    ElMessage({
+      type: 'success',
+      message: '配置导出成功'
+    })
+  } catch (error) {
+    ElMessage({
+      type: 'error',
+      message: '配置导出失败：' + (error as Error).message
+    })
+  }
+}
+
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* .layout-container {
   height: 100vh;
   width: 100vw;
@@ -168,7 +237,23 @@ const handleMainClick = async() => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
+}
+
+.settings-trigger:hover {
+  background-color: var(--el-fill-color-light);
+}
+
+.el-dropdown-menu {
+  .el-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .el-icon {
+      margin-right: 4px;
+    }
+  }
 }
 
 .settings-trigger:hover {

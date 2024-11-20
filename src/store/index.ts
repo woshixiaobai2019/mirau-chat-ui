@@ -10,7 +10,13 @@ import type {
   Message,
   CharacterConfig
 } from '../types';
-
+// 在文件顶部的类型定义部分添加新的类型
+interface ExportData {
+  chatState: ChatState;
+  characterState: CharacterState;
+  version: string;
+  exportDate: number;
+}
 // 初始化 LocalForage
 localforage.config({
   name: 'mirau-local',
@@ -102,7 +108,75 @@ export const useChatStore = defineStore('chat', {
         console.error('Failed to save chat state:', error);
       }
     },
+    // 导出数据
+    async exportData() {
+      const chatStore = useChatStore();
+      const characterStore = useCharacterStore();
+      
+      const exportData: ExportData = {
+        chatState: {
+          currentChatId: chatStore.currentChatId,
+          chatList: chatStore.chatList,
+          chatHistories: chatStore.chatHistories,
+        },
+        characterState: {
+          characters: characterStore.characters,
+          currentCharacter: characterStore.currentCharacter,
+        },
+        version: '1.0',
+        exportDate: Date.now(),
+      };
 
+      // 创建 Blob 对象
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      
+      // 创建下载链接
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mirau-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      
+      // 触发下载
+      document.body.appendChild(link);
+      link.click();
+      
+      // 清理
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    },
+
+    // 导入数据
+    async importData(file: File) {
+      try {
+        const text = await file.text();
+        const importedData: ExportData = JSON.parse(text);
+        
+        // 验证导入的数据结构
+        if (!importedData.chatState || !importedData.characterState || !importedData.version) {
+          throw new Error('Invalid backup file format');
+        }
+
+        const chatStore = useChatStore();
+        const characterStore = useCharacterStore();
+
+        // 更新 Chat Store
+        if (isChatState(importedData.chatState)) {
+          chatStore.$patch(importedData.chatState);
+          await chatStore.saveState();
+        }
+
+        // 更新 Character Store
+        if (isCharacterState(importedData.characterState)) {
+          characterStore.$patch(importedData.characterState);
+          await characterStore.saveState();
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Failed to import data:', error);
+        throw new Error('Failed to import data: ' + (error as Error).message);
+      }
+    },
     // 开始新对话
     async startNewChat({ avatar, systemPrompt, name }: StartNewChatParams) {
       const newChatId = Date.now();

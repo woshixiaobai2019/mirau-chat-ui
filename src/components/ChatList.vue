@@ -1,15 +1,5 @@
 <template>
   <div class="chat-list-container">
-    <!-- 搜索框 -->
-    <!-- <div class="search-container">
-      <el-input
-        v-model="searchQuery"
-        placeholder="搜索对话"
-        prefix-icon="Search"
-        clearable
-        size="small"
-      />
-    </div> -->
   <el-button class="new-chat-item" @click="showNewChatDialog = true" :icon="Plus" type="primary">新建对话</el-button>
     <!-- 聊天列表 -->
     <div class="chat-items">
@@ -72,65 +62,53 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Search, MoreFilled, Top, Box, Delete,Plus} from '@element-plus/icons-vue'
+import { Search, MoreFilled, Top, Box, Delete, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import NewChatDialog from './NewChat.vue'
-// 模拟的聊天数据
-const chatList = ref([
-  {
-    id: 1,
-    name: 'Executive Coach',
-    avatar: '/api/placeholder/40/40',
-    lastMessage: 'How can I help you today?',
-    pinned: false
-  },
-  {
-    id: 2,
-    name: 'AI Assistant',
-    avatar: '/api/placeholder/40/40',
-    lastMessage: 'I can help you with that task.',
-    pinned: true
-  },
-  // 可以添加更多模拟数据
-])
+import { useChatStore } from '../store'
+import type { ChatListItem } from '../types'
 
-const currentChatId = ref(1)
-// const searchQuery = ref('')
-// 新增的状态
+// 使用 chat store
+const chatStore = useChatStore()
+
+// 状态
 const showNewChatDialog = ref(false)
 
-// 处理新建对话
-const handleNewChat = (data) => {
-  console.log('New chat data:', data)
-  // TODO: 创建新对话，可能需要调用 store 或发送请求
-}
-// 过滤和排序聊天列表
-const filteredChats = computed(() => {
-  return chatList.value
-    .sort((a, b) => {
-      // 置顶的排在前面
-      if (a.pinned && !b.pinned) return -1
-      if (!a.pinned && b.pinned) return 1
-      return b.id - a.id // 最新的排在前面
-    })
-})
+// 从 store 获取当前聊天 ID
+const currentChatId = computed(() => chatStore.currentChatId)
+
+// 获取排序后的聊天列表
+const filteredChats = computed(() => chatStore.sortedChatList)
 
 // 选择聊天
-const selectChat = (chat) => {
-  currentChatId.value = chat.id
-  // TODO: 触发父组件的事件或更新store
+const selectChat = async (chat: ChatListItem) => {
+  await chatStore.switchChat(chat.id)
+}
+
+// 处理新建对话
+const handleNewChat = async (data: { name: string; avatar: string; systemPrompt: string }) => {
+  try {
+    await chatStore.startNewChat({
+      name: data.name,
+      avatar: data.avatar,
+      systemPrompt: data.systemPrompt
+    })
+    showNewChatDialog.value = false
+    ElMessage.success('创建成功')
+  } catch (error) {
+    ElMessage.error('创建失败')
+  }
 }
 
 // 处理下拉菜单命令
-const handleCommand = async (command, chat) => {
+const handleCommand = async (command: string, chat: ChatListItem) => {
   switch (command) {
     case 'pin':
-      chat.pinned = !chat.pinned
-      ElMessage.success(`${chat.pinned ? '已置顶' : '已取消置顶'}对话`)
+      await chatStore.togglePin(chat.id)
+      ElMessage.success(`${chat.pinned ? '已取消置顶' : '已置顶'}对话`)
       break
-      
       
     case 'delete':
       try {
@@ -143,18 +121,17 @@ const handleCommand = async (command, chat) => {
             type: 'warning',
           }
         )
-        const index = chatList.value.findIndex(item => item.id === chat.id)
-        if (index > -1) {
-          chatList.value.splice(index, 1)
-          ElMessage.success('已删除对话')
-        }
+        await chatStore.deleteChat(chat.id)
+        ElMessage.success('已删除对话')
       } catch {
         // 用户取消删除
       }
       break
   }
 }
+
 </script>
+
 
 <style scoped>
 .chat-list-container {

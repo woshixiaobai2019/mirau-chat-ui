@@ -38,6 +38,7 @@ const handleSend = () => {
   const trimmedMessage = message.value.trim()
   if (trimmedMessage) {
     emit('send-message', trimmedMessage)
+    console.log("trimmedMessage")
     message.value = ''
     textareaHeight.value = 24
   }

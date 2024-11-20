@@ -28,7 +28,7 @@
 
       <!-- 消息内容部分 -->
       <div class="message-content" :class="{ 'user-message': isUser }">
-        <div class="message-text">{{ messages[currentIndex - 1] }}</div>
+        <div class="message-text">{{ messages[currentIndex] }}</div>
         
         <!-- 刷新按钮区域 -->
         <div v-if="showActions && isLatestAssistantMessage && !isUser && messages.length <= 1" 
@@ -127,8 +127,6 @@ const handlePrevious = () => {
 }
 
 const handleNext = () => {
-    console.log(props.currentIndex)
-    console.log(props.messages.length)
   emit('next')
 }
 

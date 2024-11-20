@@ -1,49 +1,25 @@
 <template>
   <div class="chat-window-wrapper">
-    <div class="message-list">
-            <MessageBubble
-      :messages="userMessages"
-      :isUser="true"
-      avatar="/path/to/user-avatar.jpg"
-      roleTag="user"
-      :currentIndex="1"
-      @moreActions="handleMoreActions"
-    />
-    <MessageBubble
-      :messages="assistantMessages"
-      :isUser="false"
-      avatar="/path/to/assistant-avatar.jpg"
-      roleTag="c.ai"
-      :isLatestAssistantMessage="false"
-      :currentIndex="currentAssistantIndex"
-      @regenerate="handleRegenerate"
-      @previous="handlePrevious"
-      @next="handleNext"
-      @moreActions="handleMoreActions"
-      @rateMessage="handleRating"
-    />
-                <MessageBubble
-      :messages="userMessages"
-      :isUser="true"
-      avatar="/path/to/user-avatar.jpg"
-      roleTag="user"
-      :currentIndex="1"
-      @moreActions="handleMoreActions"
-    />
-    <MessageBubble
-      :messages="assistantMessages"
-      :isUser="false"
-      avatar="/path/to/assistant-avatar.jpg"
-      roleTag="c.ai"
-      :isLatestAssistantMessage="true"
-      :currentIndex="currentAssistantIndex"
-      @regenerate="handleRegenerate"
-      @previous="handlePrevious"
-      @next="handleNext"
-      @moreActions="handleMoreActions"
-      @rateMessage="handleRating"
-    />
-    
+    <div class="message-list" ref="messageListRef">
+      <template v-if="currentChat">
+        <template v-for="(group, groupIndex) in currentChat.messages.slice(1)" :key="groupIndex">
+                   <div class="message-debug">
+          </div>
+          <MessageBubble
+            :messages="group.messages.map(m => m.content)"
+            :isUser="group.role === 'user'"
+            :avatar="group.avatar"
+            :roleTag="group.role === 'user' ? 'user' : 'assistant'"
+            :currentIndex="group.currentIndex"
+            :isLatestAssistantMessage="isLatestAssistantMessage(group, groupIndex)"
+            @regenerate="() => handleRegenerate(group)"
+            @previous="() => handlePrevious(group)"
+            @next="() => handleNext(group)"
+            @moreActions="(messageIndex) => handleMoreActions(group, messageIndex)"
+            @edit-message="(messageIndex, newContent) => handleEditMessage(group, messageIndex, newContent)"
+          />
+        </template>
+      </template>
 
       <div class="typing-indicator" v-if="isTyping">
         <div class="typing-dot"></div>
@@ -52,70 +28,147 @@
       </div>
     </div>
 
-    <chat-input @send-message="sendMessage"/>
+    <chat-input 
+      v-model="inputMessage"
+      :disabled="isTyping"
+      @send-message="sendMessage"
+    />
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import MessageBubble from './MessageBubble.vue'
-import ChatInput from './ChatInput.vue'
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useChatStore } from '@/store';
+import type { ChatGroup, Message } from '@/types';
+import MessageBubble from './MessageBubble.vue';
+import ChatInput from './ChatInput.vue';
 
+const chatStore = useChatStore();
+const { currentChat } = storeToRefs(chatStore);
 
-// 模拟数据
-const assistantMessages = ref([
-  "I am Executive coach, how can I help you today",
-  "Let me provide you with some guidance on that topic...",
-  "Here's a detailed analysis of your situation...",
-  "Based on your goals, I would recommend..."
-])
+const messageListRef = ref<HTMLDivElement | null>(null);
+const inputMessage = ref('');
+const isTyping = ref(false);
 
-const userMessages = ref([
-  "Hello, I need some advice about career development"
-])
+// 创建新对话
+const createNewChat = async () => {
+  await chatStore.startNewChat({
+    avatar: '/default-assistant-avatar.png', // 使用默认头像
+    name: 'New Chat',
+    systemPrompt: 'You are a helpful assistant.' // 默认系统提示词
+  });
+};
 
-const currentAssistantIndex = ref(1)
+// 判断是否是助手的最新消息
+const isLatestAssistantMessage = (group: ChatGroup, groupIndex: number) => {
+  if (group.role !== 'assistant') return false;
+  const assistantGroups = currentChat.value?.messages.filter(g => g.role === 'assistant') || [];
+  return assistantGroups[assistantGroups.length - 1] === group;
+};
 
-// 处理函数
-const handleRegenerate = () => {
-  console.log('Regenerating message...')
-}
-
-const handlePrevious = () => {
-  if (currentAssistantIndex.value > 1) {
-    currentAssistantIndex.value--
+// 处理发送消息
+const sendMessage = async (content: string) => {
+  if (!content.trim()) return;
+  
+  // 如果没有当前对话，创建一个新的
+  if (!currentChat.value?.id) {
+    await createNewChat();
   }
-}
 
-const handleNext = () => {
-    console.log("handle next")
-  if (currentAssistantIndex.value < assistantMessages.value.length) {
-    currentAssistantIndex.value++
+  const chatId = currentChat.value!.id;
+  
+  // 添加用户消息
+  await chatStore.addMessage(chatId, {
+    id: Date.now().toString(),
+    content: content.trim(),
+    role: 'user',
+    timestamp: Date.now()
+  });
+
+  // 模拟助手回复
+  isTyping.value = true;
+  setTimeout(async () => {
+    await chatStore.addMessage(chatId, {
+      id: Date.now().toString(),
+      content: `This is a simulated response to: ${content}`,
+      role: 'assistant',
+      timestamp: Date.now()
+    });
+    isTyping.value = false;
+    scrollToBottom();
+  }, 1000);
+
+  inputMessage.value = '';
+  scrollToBottom();
+  console.log("current chat")
+  console.log(currentChat)
+};
+
+// 处理消息重新生成
+const handleRegenerate = async (group: ChatGroup) => {
+  if (!currentChat.value?.id) return;
+  
+  // 移除最后一条助手消息
+  const lastMessage = group.messages[group.messages.length - 1];
+  isTyping.value = true;
+
+  // 模拟重新生成
+  setTimeout(async () => {
+    await chatStore.editMessage(
+      currentChat.value!.id,
+      lastMessage.id,
+      `Regenerated response at ${new Date().toLocaleTimeString()}`
+    );
+    isTyping.value = false;
+  }, 1000);
+};
+
+// 处理查看上一条消息
+const handlePrevious = (group: ChatGroup) => {
+  if (group.currentIndex > 0) {
+    group.currentIndex--;
   }
-}
+};
 
-const handleMoreActions = () => {
-  console.log('Opening more actions menu...')
-}
+// 处理查看下一条消息
+const handleNext = (group: ChatGroup) => {
+  if (group.currentIndex < group.messages.length - 1) {
+    group.currentIndex++;
+  }
+};
 
-const handleRating = (value) => {
-  console.log('Rating:', value)
-}
+// 处理更多操作
+const handleMoreActions = (group: ChatGroup, messageIndex: number) => {
+  // 这里可以实现编辑、复制等功能
+  console.log('More actions for message:', group.messages[messageIndex]);
+};
 
-const isTyping = ref(false)
-const inputMessage = ref('')
+// 处理消息编辑
+const handleEditMessage = async (group: ChatGroup, messageIndex: number, newContent: string) => {
+  if (!currentChat.value?.id) return;
+  const message = group.messages[messageIndex];
+  await chatStore.editMessage(currentChat.value.id, message.id, newContent);
+};
 
-const sendMessage = (message) => {
-  // 处理发送消息的逻辑
-  console.log('发送消息:', message)
-}
+// 滚动到底部
+const scrollToBottom = () => {
+  setTimeout(() => {
+    if (messageListRef.value) {
+      messageListRef.value.scrollTop = messageListRef.value.scrollHeight;
+    }
+  }, 100);
+};
 
-const retryMessage = (message, direction) => {
-  // 根据direction重新获取消息的逻辑
-  console.log('重新获取消息:', message, direction)
-  // 更新消息的retryCount
-  message.retryCount++
-}
+// 监听聊天历史变化，自动滚动到底部
+watch(() => currentChat.value?.messages, () => {
+  scrollToBottom();
+}, { deep: true });
+
+// 组件挂载时初始化
+onMounted(() => {
+  scrollToBottom();
+});
 </script>
 
 <style scoped>
@@ -136,26 +189,26 @@ const retryMessage = (message, direction) => {
 
 .typing-indicator {
   display: flex;
-  justify-content: center;
-  align-items: center;
   gap: 4px;
-  height: 24px;
+  padding: 8px;
+  justify-content: center;
 }
 
 .typing-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: #ccc;
-  animation: typing-bounce 0.6s infinite alternate;
+  background-color: #666;
+  animation: typing 1s infinite ease-in-out;
 }
 
-.typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-.typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
+@keyframes typing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 .input-area {

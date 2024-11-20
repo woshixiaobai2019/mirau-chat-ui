@@ -9,29 +9,39 @@
   >
     <div class="new-chat-form">
       <!-- 头像上传区域 -->
-      <div class="avatar-section">
+      <div class="avatar-section" >
         <p class="section-title">选择头像</p>
-        <el-upload
-          class="avatar-uploader"
-          :show-file-list="false"
-          :before-upload="beforeAvatarUpload"
-          :on-success="handleAvatarSuccess"
-        >
-          <div class="avatar-wrapper">
+          <div class="avatar-wrapper" v-if="avatarUrl" >
             <el-avatar 
-              v-if="avatarUrl" 
               :size="60" 
               :src="avatarUrl"
               class="uploaded-avatar"
             />
-            <div v-else class="upload-placeholder">
-              <el-icon><Plus /></el-icon>
-            </div>
           </div>
-        </el-upload>
+            <div class="upload-placeholder">
+            <el-input
+              v-model="avatarUrl"
+              placeholder="请输入头像地址"
+              resize="none"
+              :maxlength="200"
+              show-word-limit
+            />
+            </div>
+ 
       </div>
 
       <!-- System Prompt 输入区域 -->
+      <div class="prompt-section">
+        <p class="section-title">角色名称</p>
+        <el-input
+          v-model="name"
+          placeholder="请输入角色称呼"
+          resize="none"
+          :maxlength="20"
+          show-word-limit
+        />
+      </div>
+            <!-- System Prompt 输入区域 -->
       <div class="prompt-section">
         <p class="section-title">角色设定</p>
         <el-input
@@ -40,7 +50,7 @@
           :rows="3"
           placeholder="请描述这个AI助手的特点和行为方式..."
           resize="none"
-          :maxlength="200"
+          :maxlength="500"
           show-word-limit
         />
       </div>
@@ -86,32 +96,33 @@ const visible = computed({
 
 const avatarUrl = ref('')
 const systemPrompt = ref('')
+const name = ref('')
 
 // 表单验证
 const isValid = computed(() => {
-  return avatarUrl.value && systemPrompt.value.trim().length > 0
+  return avatarUrl.value && systemPrompt.value.trim().length > 0 && name.value.trim().length > 0
 })
 
-// 头像上传前验证
-const beforeAvatarUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
+// // 头像上传前验证
+// const beforeAvatarUpload = (file) => {
+//   const isImage = file.type.startsWith('image/')
+//   const isLt2M = file.size / 1024 / 1024 < 2
 
-  if (!isImage) {
-    ElMessage.error('只能上传图片文件!')
-    return false
-  }
-  if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB!')
-    return false
-  }
-  return true
-}
+//   if (!isImage) {
+//     ElMessage.error('只能上传图片文件!')
+//     return false
+//   }
+//   if (!isLt2M) {
+//     ElMessage.error('图片大小不能超过 2MB!')
+//     return false
+//   }
+//   return true
+// }
 
-// 头像上传成功回调
-const handleAvatarSuccess = (res) => {
-  avatarUrl.value = res.url // 假设服务器返回图片URL
-}
+// // 头像上传成功回调
+// const handleAvatarSuccess = (res) => {
+//   avatarUrl.value = res.url // 假设服务器返回图片URL
+// }
 
 const handleCancel = () => {
   visible.value = false
@@ -123,8 +134,9 @@ const handleConfirm = () => {
   if (!isValid.value) return
 
   emit('confirm', {
-    avatarUrl: avatarUrl.value,
-    systemPrompt: systemPrompt.value.trim()
+    avatar: avatarUrl.value,
+    systemPrompt: systemPrompt.value.trim(),
+    name: name.value.trim()
   })
   
   handleCancel()

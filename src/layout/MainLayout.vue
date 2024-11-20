@@ -38,7 +38,7 @@
       <!-- 顶部角色信息 -->
       <el-header height="60px" class="main-header">
         <div class="header-center">
-          <span class="character-name">Executive coach</span>
+          <span class="character-name">{{currentChat.characterConfig.name}}</span>
         </div>
         <div class="header-right">
           <el-button
@@ -70,8 +70,11 @@ import { Setting, Fold, MoreFilled,Expand } from '@element-plus/icons-vue'
 import ChatList from '../components/ChatList.vue'
 import ChatWindow from '../components/ChatWindow.vue'
 import CharacterInfo from "../components/CharacterInfo.vue"
-
-
+import { useChatStore } from '../store'
+import { storeToRefs } from 'pinia';
+const chatStore = useChatStore();
+const { currentChat } = storeToRefs(chatStore);
+console.log(currentChat)
 const isCollapse = ref(true)
 const isCharacterInfoVisible = ref(false)
 

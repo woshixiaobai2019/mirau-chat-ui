@@ -38,6 +38,7 @@ export interface CharacterConfig {
   systemPrompt: string;
   temperature: number;
   topP: number;
+  model: string;
 }
 
 // 聊天历史记录的类型

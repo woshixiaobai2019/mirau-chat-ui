@@ -24,7 +24,7 @@
           </div>
 
           <!-- 操作按钮 -->
-          <div class="chat-actions">
+          <div class="chat-actions" @click="testclick">
             <el-dropdown trigger="click" @command="handleCommand($event, chat)">
               <el-icon><MoreFilled /></el-icon>
               
@@ -104,6 +104,7 @@ const handleNewChat = async (data: { name: string; avatar: string; systemPrompt:
 
 // 处理下拉菜单命令
 const handleCommand = async (command: string, chat: ChatListItem) => {
+  console.log("dropdown")
   switch (command) {
     case 'pin':
       await chatStore.togglePin(chat.id)

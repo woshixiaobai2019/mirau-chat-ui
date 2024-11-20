@@ -15,7 +15,7 @@
             @regenerate="() => handleRegenerate(group)"
             @previous="() => handlePrevious(group)"
             @next="() => handleNext(group)"
-            @moreActions="(messageIndex) => handleMoreActions(group, messageIndex)"
+            @delete="() => handleDelete(group, groupIndex)"
             @edit-message="(messageIndex, newContent) => handleEditMessage(group, messageIndex, newContent)"
           />
         </template>
@@ -43,6 +43,8 @@ import { useChatStore } from '@/store';
 import type { ChatGroup, Message } from '@/types';
 import MessageBubble from './MessageBubble.vue';
 import ChatInput from './ChatInput.vue';
+import {ElMessageBox,ElMessage} from 'element-plus'
+import {chatAPI} from '@/api/chat';
 
 const chatStore = useChatStore();
 const { currentChat } = storeToRefs(chatStore);
@@ -51,14 +53,7 @@ const messageListRef = ref<HTMLDivElement | null>(null);
 const inputMessage = ref('');
 const isTyping = ref(false);
 
-// 创建新对话
-const createNewChat = async () => {
-  await chatStore.startNewChat({
-    avatar: '/default-assistant-avatar.png', // 使用默认头像
-    name: 'New Chat',
-    systemPrompt: 'You are a helpful assistant.' // 默认系统提示词
-  });
-};
+
 
 // 判断是否是助手的最新消息
 const isLatestAssistantMessage = (group: ChatGroup, groupIndex: number) => {
@@ -66,91 +61,6 @@ const isLatestAssistantMessage = (group: ChatGroup, groupIndex: number) => {
   const assistantGroups = currentChat.value?.messages.filter(g => g.role === 'assistant') || [];
   return assistantGroups[assistantGroups.length - 1] === group;
 };
-
-// 处理发送消息
-const sendMessage = async (content: string) => {
-  if (!content.trim()) return;
-  
-  // 如果没有当前对话，创建一个新的
-  if (!currentChat.value?.id) {
-    await createNewChat();
-  }
-
-  const chatId = currentChat.value!.id;
-  
-  // 添加用户消息
-  await chatStore.addMessage(chatId, {
-    id: Date.now().toString(),
-    content: content.trim(),
-    role: 'user',
-    timestamp: Date.now()
-  });
-
-  // 模拟助手回复
-  isTyping.value = true;
-  setTimeout(async () => {
-    await chatStore.addMessage(chatId, {
-      id: Date.now().toString(),
-      content: `This is a simulated response to: ${content}`,
-      role: 'assistant',
-      timestamp: Date.now()
-    });
-    isTyping.value = false;
-    scrollToBottom();
-  }, 1000);
-
-  inputMessage.value = '';
-  scrollToBottom();
-  console.log("current chat")
-  console.log(currentChat)
-};
-
-// 处理消息重新生成
-const handleRegenerate = async (group: ChatGroup) => {
-  if (!currentChat.value?.id) return;
-  
-  // 移除最后一条助手消息
-  const lastMessage = group.messages[group.messages.length - 1];
-  isTyping.value = true;
-
-  // 模拟重新生成
-  setTimeout(async () => {
-    await chatStore.editMessage(
-      currentChat.value!.id,
-      lastMessage.id,
-      `Regenerated response at ${new Date().toLocaleTimeString()}`
-    );
-    isTyping.value = false;
-  }, 1000);
-};
-
-// 处理查看上一条消息
-const handlePrevious = (group: ChatGroup) => {
-  if (group.currentIndex > 0) {
-    group.currentIndex--;
-  }
-};
-
-// 处理查看下一条消息
-const handleNext = (group: ChatGroup) => {
-  if (group.currentIndex < group.messages.length - 1) {
-    group.currentIndex++;
-  }
-};
-
-// 处理更多操作
-const handleMoreActions = (group: ChatGroup, messageIndex: number) => {
-  // 这里可以实现编辑、复制等功能
-  console.log('More actions for message:', group.messages[messageIndex]);
-};
-
-// 处理消息编辑
-const handleEditMessage = async (group: ChatGroup, messageIndex: number, newContent: string) => {
-  if (!currentChat.value?.id) return;
-  const message = group.messages[messageIndex];
-  await chatStore.editMessage(currentChat.value.id, message.id, newContent);
-};
-
 // 滚动到底部
 const scrollToBottom = () => {
   setTimeout(() => {
@@ -159,6 +69,220 @@ const scrollToBottom = () => {
     }
   }, 100);
 };
+
+
+const sendMessage = async (content: string) => {
+    if (!content.trim()) return;
+    
+    // 如果没有当前对话，创建一个新的
+    if (!currentChat.value?.id) {
+      await chatStore.startNewChat({
+        name: 'New Chat',
+        avatar: '/default-avatar.png',
+        systemPrompt: 'You are a helpful assistant.'
+      });
+    }
+
+    const chatId = currentChat.value!.id;
+    
+    // 添加用户消息
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: content.trim(),
+      role: 'user',
+      timestamp: Date.now()
+    };
+    
+    await chatStore.addMessage(chatId, userMessage);
+    inputMessage.value = '';
+    scrollToBottom();
+
+    // 创建助手消息占位符
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      content: '',
+      role: 'assistant',
+      timestamp: Date.now(),
+      isPending: true
+    };
+
+    await chatStore.addMessage(chatId, assistantMessage);
+    isTyping.value = true;
+
+    let fullResponse = '';
+    
+    try {
+      const config = currentChat.value!.characterConfig;
+      
+      await chatAPI.streamChat(
+        currentChat.value!.messages,
+        config,
+        (chunk: string) => {
+          fullResponse += chunk;
+          chatStore.editMessage(chatId, assistantMessage.id, fullResponse,true);
+          scrollToBottom();
+        },
+        (error: Error) => {
+          console.error('Error in chat stream:', error);
+          ElMessage({
+            message: `Error: ${error.message}`,
+            type: 'error',
+            duration: 5000
+          });
+          chatStore.editMessage(
+            chatId, 
+            assistantMessage.id, 
+            'Error: Failed to get response. Please try again.',true
+          );
+          assistantMessage.isPending = false;
+          isTyping.value = false;
+        },
+        () => {
+          isTyping.value = false;
+          assistantMessage.isPending = false;
+          chatStore.editMessage(chatId, assistantMessage.id, fullResponse,true);
+          scrollToBottom();
+        }
+      );
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      ElMessage({
+        message: 'Failed to send message. Please try again.',
+        type: 'error',
+        duration: 5000
+      });
+      isTyping.value = false;
+      assistantMessage.isPending = false;
+      chatStore.editMessage(
+        chatId, 
+        assistantMessage.id, 
+        'Error: Failed to send message. Please try again.',true
+      );
+    }
+  };
+
+  // 重新生成消息
+  const handleRegenerate = async (group: ChatGroup) => {
+    if (!currentChat.value?.id) return;
+    
+    const chatId = currentChat.value.id;
+    const lastMessage = group.messages[group.currentIndex];
+    if (!lastMessage || lastMessage.role !== 'assistant') return;
+    
+    // 设置消息为待处理状态
+    isTyping.value = true;
+    await chatStore.editMessage(chatId, lastMessage.id, "");
+    const newLastMessage =  group.messages[group.currentIndex];
+    let newResponse = '';
+    
+    try {
+      const config = currentChat.value.characterConfig;
+      
+      // 获取到当前消息之前的所有消息历史
+      const messageHistory = currentChat.value.messages.slice(0, -1);
+      
+      await chatAPI.streamChat(
+        messageHistory,
+        config,
+        (chunk: string) => {
+          newResponse += chunk;
+          chatStore.editMessage(chatId, newLastMessage.id, newResponse,true);
+          scrollToBottom();
+        },
+        (error: Error) => {
+          console.error('Error in regenerating message:', error);
+          ElMessage({
+            message: `Error: ${error.message}`,
+            type: 'error',
+            duration: 5000
+          });
+          // 恢复原始消息
+          chatStore.editMessage(chatId, newLastMessage.id, "Failed to regenerate message:",true);
+          isTyping.value = false;
+        },
+        () => {
+          isTyping.value = false;
+          chatStore.editMessage(chatId, newLastMessage.id, newResponse,true);
+          scrollToBottom();
+        }
+      );
+    } catch (error) {
+      console.error('Failed to regenerate message:', error);
+      ElMessage({
+        message: 'Failed to regenerate message. Please try again.',
+        type: 'error',
+        duration: 5000
+      });
+      // 恢复原始消息
+      chatStore.editMessage(chatId, newLastMessage.id, "Failed to regenerate message:",true);
+      isTyping.value = false;
+    }
+  };
+
+  // 处理查看上一条消息
+  const handlePrevious = async (group: ChatGroup) => {
+    console.log("handlePrevious")
+    if (!currentChat.value?.id) return;
+    
+    const lastMessage = group.messages[group.currentIndex];
+    if (!lastMessage) return;
+
+    await chatStore.switchMessageVariant(
+      currentChat.value.id,
+      lastMessage.id,
+      'prev'
+    );
+  };
+
+  // 处理查看下一条消息
+  const handleNext = async (group: ChatGroup) => {
+    if (!currentChat.value?.id) return;
+    
+    const lastMessage = group.messages[group.currentIndex];
+    if (!lastMessage) return;
+    if (group.currentIndex === group.messages.length - 1){
+      await handleRegenerate(group)
+    }
+    else{
+    await chatStore.switchMessageVariant(
+      currentChat.value.id,
+      lastMessage.id,
+      'next'
+    );
+    }
+  };
+
+  // 处理消息编辑
+  const handleEditMessage = async (group: ChatGroup, messageIndex: number, newContent: string) => {
+    if (!currentChat.value?.id) return;
+    
+    const message = group.messages[messageIndex];
+    if (!message) return;
+
+    try {
+      await chatStore.editMessage(
+        currentChat.value.id,
+        message.id,
+        newContent
+      );
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+    }
+  };
+    // 添加删除消息处理函数
+  const handleDelete = async (group: ChatGroup, groupIndex: number) => {
+    if (!currentChat.value?.id) return;
+
+    // 如果是系统消息，不允许删除
+    if (group.role === 'system') {
+      ElMessage.warning('Cannot delete system messages');
+      return;
+    }
+    await chatStore.deleteMessageGroup(currentChat.value.id, groupIndex);
+    ElMessage.success('Message deleted successfully');
+
+  };
+
 
 // 监听聊天历史变化，自动滚动到底部
 watch(() => currentChat.value?.messages, () => {

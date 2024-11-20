@@ -74,6 +74,7 @@ import { useChatStore } from '../store'
 import { storeToRefs } from 'pinia';
 const chatStore = useChatStore();
 const { currentChat } = storeToRefs(chatStore);
+
 console.log(currentChat)
 const isCollapse = ref(true)
 const isCharacterInfoVisible = ref(false)

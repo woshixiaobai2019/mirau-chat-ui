@@ -73,6 +73,13 @@ export const useChatStore = defineStore('chat', {
         if (savedState && isChatState(savedState)) {
           this.$patch(savedState);
         }
+        if (this.currentChatId == null) {
+          await this.startNewChat({
+            name: 'Mirau',
+            avatar: 'https://a.520gexing.com/uploads/allimg/2021042109/uqaqhuvavt0.jpg',
+            systemPrompt: 'You are a helpful assistant.'
+          });
+        }
       } catch (error) {
         console.error('Failed to initialize chat store:', error);
       }
@@ -118,6 +125,7 @@ export const useChatStore = defineStore('chat', {
           systemPrompt,
           temperature: 0.7,
           topP: 0.9,
+          model:"qwen2_5-14b-instruct"
         },
         messages: [{
           role: 'system',
@@ -176,22 +184,118 @@ export const useChatStore = defineStore('chat', {
     },
 
     // 编辑消息
-    async editMessage(chatId: number, messageId: string, newContent: string) {
+    // 更新后的编辑消息函数
+    async editMessage(chatId: number, messageId: string, newContent: string,generated=false) {
       const chat = this.chatHistories[chatId];
       if (!chat) return;
 
       for (const group of chat.messages) {
-        const message = group.messages.find(m => m.id === messageId);
-        if (message) {
-          message.content = newContent;
-          if (group.messages.indexOf(message) === group.messages.length - 1) {
-            await this.updateLastMessage(chatId, newContent);
+        const messageIndex = group.messages.findIndex(m => m.id === messageId);
+        if (messageIndex !== -1) {
+          const message = group.messages[messageIndex];
+          
+          if (message.role === 'user' || generated) {
+            // 用户消息直接修改
+            message.content = newContent;
+            if (messageIndex === group.messages.length - 1) {
+              await this.updateLastMessage(chatId, newContent);
+            }
+          } else {
+            // 助手消息创建新变体
+            // 删除当前索引之后的所有变体
+            group.messages = group.messages.slice(0, group.currentIndex + 1);
+            
+            // 添加新变体
+            const newVariant: Message = {
+              id: generateId(),
+              content: newContent,
+              role: message.role,
+              timestamp: Date.now()
+            };
+            group.messages.push(newVariant);
+            
+            // 更新当前索引指向新变体
+            group.currentIndex = group.messages.length - 1;
+
+            // 如果这是该组最后一条消息，更新 lastMessage
+            if (group === chat.messages[chat.messages.length - 1]) {
+              await this.updateLastMessage(chatId, newContent);
+            }
           }
           break;
         }
       }
       await this.saveState();
     },
+        // 添加删除消息组的方法
+        async deleteMessageGroup(chatId: number, groupIndex: number) {
+          const chat = this.chatHistories[chatId];
+          if (!chat) return;
+    
+          // 检查索引是否有效
+          if (groupIndex < 0 || groupIndex >= chat.messages.length) return;
+    
+          // 不允许删除系统消息
+          if (chat.messages[groupIndex].role === 'system') return;
+    
+          // 删除消息组
+          chat.messages.splice(groupIndex, 1);
+    
+          // 如果删除的是最后一组消息，更新 lastMessage
+          if (chat.messages.length > 0) {
+            const lastGroup = chat.messages[chat.messages.length - 1];
+            const lastMessage = lastGroup.messages[lastGroup.currentIndex];
+            await this.updateLastMessage(chatId, lastMessage.content);
+          } else {
+            // 如果没有消息了，清空 lastMessage
+            await this.updateLastMessage(chatId, '');
+          }
+    
+          await this.saveState();
+        },
+
+    // 添加用于切换消息变体的函数
+    async switchMessageVariant(chatId: number, messageId: string, direction: 'prev' | 'next') {
+      const chat = this.chatHistories[chatId];
+      if (!chat) return;
+
+      for (const group of chat.messages) {
+        const messageIndex = group.messages.findIndex(m => m.id === messageId);
+        if (messageIndex !== -1) {
+          if (direction === 'prev' && group.currentIndex > 0) {
+            group.currentIndex--;
+            if (group === chat.messages[chat.messages.length - 1]) {
+              await this.updateLastMessage(chatId, group.messages[group.currentIndex].content);
+            }
+          } else if (direction === 'next' && group.currentIndex < group.messages.length - 1) {
+            group.currentIndex++;
+            if (group === chat.messages[chat.messages.length - 1]) {
+              await this.updateLastMessage(chatId, group.messages[group.currentIndex].content);
+            }
+          }
+          break;
+        }
+      }
+      await this.saveState();
+    },
+
+    // 获取消息的所有变体
+    getMessageVariants(chatId: number, messageId: string) {
+      const chat = this.chatHistories[chatId];
+      if (!chat) return null;
+
+      for (const group of chat.messages) {
+        const messageIndex = group.messages.findIndex(m => m.id === messageId);
+        if (messageIndex !== -1) {
+          return {
+            variants: group.messages,
+            currentIndex: group.currentIndex
+          };
+        }
+      }
+      return null;
+    },
+
 
     // 删除对话
     async deleteChat(chatId: number) {

@@ -245,7 +245,7 @@ export const useChatStore = defineStore('chat', {
       if (currentGroup?.role !== message.role) {
         currentGroup = {
           role: message.role,
-          avatar: message.role === 'user' ? '/user-avatar.png' : chat.characterConfig.avatar,
+          avatar: message.role === 'user' ? 'assets/default-user-avatar.png' : chat.characterConfig.avatar,
           messages: [],
           currentIndex: 0,
         };

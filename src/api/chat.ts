@@ -51,7 +51,7 @@ class ChatAPI {
       onComplete: () => void
     ): Promise<void> {
       try {
-        const messages = this.formatMessages(history);
+        const messages_all = this.formatMessages(history);
         
         const finalConfig = {
           ...DEFAULT_CONFIG,
@@ -59,7 +59,7 @@ class ChatAPI {
         };
         
         const body: ApiRequestBody = {
-          messages,
+          messages:[{"role":"system","content":finalConfig.systemPrompt!}].concat(messages_all.slice(1,)),
           model: finalConfig.model!,
           temperature: finalConfig.temperature!,
           top_p: finalConfig.topP!,

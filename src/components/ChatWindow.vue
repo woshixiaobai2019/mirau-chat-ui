@@ -15,7 +15,7 @@
             @regenerate="() => handleRegenerate(group)"
             @previous="() => handlePrevious(group)"
             @next="() => handleNext(group)"
-            @delete="() => handleDelete(group, groupIndex)"
+            @delete="(index) => handleDelete(group, groupIndex)"
             @edit-message="(newContent) => handleEditMessage(group, groupIndex, newContent)"
           />
         </template>
@@ -272,6 +272,8 @@ const sendMessage = async (content: string) => {
   };
     // 添加删除消息处理函数
   const handleDelete = async (group: ChatGroup, groupIndex: number) => {
+    console.log("delete")
+    console.log(groupIndex)
     if (!currentChat.value?.id) return;
 
     // 如果是系统消息，不允许删除
@@ -279,7 +281,7 @@ const sendMessage = async (content: string) => {
       ElMessage.warning('Cannot delete system messages');
       return;
     }
-    await chatStore.deleteMessageGroup(currentChat.value.id, groupIndex);
+    await chatStore.deleteMessageGroup(currentChat.value.id, groupIndex+1);
     ElMessage.success('Message deleted successfully');
 
   };

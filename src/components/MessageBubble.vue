@@ -257,7 +257,7 @@ const openDeleteDialog = () => {
 
 // 确认删除
 const confirmDelete = () => {
-  emit('delete', props.currentIndex - 1)
+  emit('delete', props.currentIndex)
   deleteDialogVisible.value = false
   ElMessage.success('消息已删除')
 }

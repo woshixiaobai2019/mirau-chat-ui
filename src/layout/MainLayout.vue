@@ -12,7 +12,7 @@
     <div class="sidebar" :class="{ 'collapsed': isCollapse }">
       <!-- 用户信息区域 -->
       <div class="user-info">
-        <el-avatar :size="32" src="@/assets/logo.png" />
+        <el-avatar :size="32" src="assets/logo.png" />
         <span class="username">Mirau</span>
       </div>
       
@@ -24,7 +24,7 @@
     <div class="user-settings">
       <el-dropdown trigger="click">
         <div class="settings-trigger">
-          <el-avatar :size="24" src="@/assets/default-avatar.png" />
+          <el-avatar :size="24" src="assets/default-user-avatar.png" />
           <span>mouse</span>
           <el-icon><Setting /></el-icon>
         </div>

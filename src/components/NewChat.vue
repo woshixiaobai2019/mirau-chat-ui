@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="新建对话"
+    title="NewChat"
     :width="dialogWidth"
     :close-on-click-modal="false"
     :destroy-on-close="true"

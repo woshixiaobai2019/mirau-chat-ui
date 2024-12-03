@@ -40,12 +40,12 @@
           <el-dropdown-menu>
             <!-- 导出按钮 -->
             <el-dropdown-item @click="handleExport">
-              <el-icon><Download /></el-icon>导出配置
+              <el-icon><Download /></el-icon>export
             </el-dropdown-item>
             
             <!-- 导入按钮 -->
             <el-dropdown-item @click="triggerFileInput">
-              <el-icon><Upload /></el-icon>导入配置
+              <el-icon><Upload /></el-icon>import
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>

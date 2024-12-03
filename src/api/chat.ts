@@ -1,5 +1,6 @@
 // api/chat.ts
 import type { Message, ChatGroup, CharacterConfig } from '../types';
+import { useChatStore } from '../store';
 
 interface ApiRequestBody {
   messages: {
@@ -21,9 +22,7 @@ const DEFAULT_CONFIG: Partial<CharacterConfig> = {
 
 class ChatAPI {
     private static instance: ChatAPI;
-    private API_ENDPOINT = 'http://localhost:8885/v1/chat/completions';
-  
-    private constructor() {}
+    
   
     public static getInstance(): ChatAPI {
       if (!ChatAPI.instance) {
@@ -48,7 +47,8 @@ class ChatAPI {
       config: Partial<CharacterConfig>,
       onMessage: (chunk: string) => void,
       onError: (error: Error) => void,
-      onComplete: () => void
+      onComplete: () => void,
+      API_ENDPOINT:string='http://localhost:8000/api/chat',
     ): Promise<void> {
       try {
         const messages_all = this.formatMessages(history);
@@ -66,7 +66,7 @@ class ChatAPI {
           stream: true // 启用流式传输
         };
   
-        const response = await fetch(this.API_ENDPOINT, {
+        const response = await fetch(API_ENDPOINT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

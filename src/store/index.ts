@@ -54,6 +54,7 @@ export const useChatStore = defineStore('chat', {
     currentChatId: null,
     chatList: [],
     chatHistories: {},
+    API_ENDPOINT: 'http://localhost:8000', // 默认值
   }),
 
   getters: {
@@ -90,7 +91,16 @@ export const useChatStore = defineStore('chat', {
         console.error('Failed to initialize chat store:', error);
       }
     },
+    // 设置API端点
+    async setApiEndpoint(endpoint: string) {
+      this.API_ENDPOINT = endpoint;
+      await this.saveState();
+    },
 
+    // 获取API端点
+    getApiEndpoint(): string {
+      return this.API_ENDPOINT;
+    },
     // 保存状态到 LocalForage
     async saveState() {
       try {
@@ -99,6 +109,7 @@ export const useChatStore = defineStore('chat', {
           currentChatId: this.currentChatId,
           chatList: JSON.parse(JSON.stringify(this.chatList)),
           chatHistories: JSON.parse(JSON.stringify(this.chatHistories)),
+          API_ENDPOINT: this.API_ENDPOINT
         };
         
         console.log('Saving userchat state:');
@@ -118,6 +129,7 @@ export const useChatStore = defineStore('chat', {
           currentChatId: chatStore.currentChatId,
           chatList: chatStore.chatList,
           chatHistories: chatStore.chatHistories,
+          API_ENDPOINT: chatStore.API_ENDPOINT,
         },
         characterState: {
           characters: characterStore.characters,

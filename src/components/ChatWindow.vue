@@ -142,7 +142,8 @@ const sendMessage = async (content: string) => {
           assistantMessage.isPending = false;
           chatStore.editMessage(chatId, assistantMessage.id, fullResponse,true);
           scrollToBottom();
-        }
+        },
+        chatStore.API_ENDPOINT
       );
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -204,7 +205,8 @@ const sendMessage = async (content: string) => {
           isTyping.value = false;
           chatStore.editMessage(chatId, newLastMessage.id, newResponse,true);
           scrollToBottom();
-        }
+        },
+        chatStore.API_ENDPOINT
       );
     } catch (error) {
       console.error('Failed to regenerate message:', error);

@@ -22,6 +22,13 @@
       </div>
       
     <div class="user-settings">
+      <el-input
+        v-model="apiEndpoint"
+        placeholder="INPUT_API_ENDPOINT"
+        @blur="handleApiEndpointChange"
+        size="small"
+      ></el-input>
+      <el-divider/>
       <el-dropdown trigger="click">
         <div class="settings-trigger">
           <el-avatar :size="24" src="assets/default-user-avatar.png" />
@@ -89,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Setting, Fold, MoreFilled,Expand } from '@element-plus/icons-vue'
 import ChatList from '../components/ChatList.vue'
 import ChatWindow from '../components/ChatWindow.vue'
@@ -99,12 +106,20 @@ import { storeToRefs } from 'pinia';
 import { ElMessage } from 'element-plus'
 const chatStore = useChatStore();
 const { currentChat } = storeToRefs(chatStore);
+import {chatAPI} from '../api/chat'
 
-
-console.log(currentChat)
+console.log(chatStore)
 const isCollapse = ref(true)
 const isCharacterInfoVisible = ref(false)
+const apiEndpoint = ref('')
 
+onMounted(() => {
+  apiEndpoint.value = chatStore.API_ENDPOINT
+})
+
+const handleApiEndpointChange = async () => {
+  await chatStore.setApiEndpoint(apiEndpoint.value)
+}
 const saveCharacter = async () => {
   await chatStore.saveState()
   isCharacterInfoVisible.value = false
@@ -117,7 +132,7 @@ const toggleCharacterInfo = (e) => {
   console.log(isCharacterInfoVisible.value)
   isCharacterInfoVisible.value = !isCharacterInfoVisible.value
 }
-const toggleSidebar = (e) => {
+const toggleSidebar = async (e) => {
   console.log("left side bar")
   console.log(isCollapse.value)
   e.stopPropagation()

@@ -69,6 +69,7 @@ export interface ChatState {
   currentChatId: number | null;
   chatList: ChatListItem[];
   chatHistories: Record<number, ChatHistory>;
+  API_ENDPOINT: string;
 }
 
 // 角色状态的存储类型

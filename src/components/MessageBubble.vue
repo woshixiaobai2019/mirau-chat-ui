@@ -28,15 +28,15 @@
             <el-dropdown-menu>
               <el-dropdown-item command="edit">
                 <el-icon><EditPen /></el-icon>
-                <span>编辑消息</span>
+                <span>edit</span>
               </el-dropdown-item>
               <el-dropdown-item command="copy" >
                 <el-icon><CopyDocument /></el-icon>
-                <span>复制消息</span>
+                <span>copy</span>
               </el-dropdown-item>
               <el-dropdown-item command="delete" >
                 <el-icon><Delete /></el-icon>
-                <span>删除消息</span>
+                <span>delete</span>
               </el-dropdown-item>
             </el-dropdown-menu>
 
@@ -87,7 +87,7 @@
     <!-- 编辑消息对话框 -->
     <el-dialog
       v-model="editDialogVisible"
-      title="编辑消息"
+      title="edit"
       width="50%"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -96,8 +96,8 @@
         <el-form-item
           prop="content"
           :rules="[
-            { required: true, message: '消息内容不能为空' },
-            { min: 1, message: '消息内容不能为空' }
+            { required: true, message: 'can not be empty' },
+            { min: 1, message: 'can not be empty' }
           ]"
         >
           <el-input
@@ -105,15 +105,15 @@
             type="textarea"
             :rows="5"
             resize="none"
-            placeholder="请输入消息内容"
+            placeholder="input message..."
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="cancelEdit">取消</el-button>
+          <el-button @click="cancelEdit">cancel</el-button>
           <el-button type="primary" @click="confirmEdit">
-            确认
+            confirm
           </el-button>
         </span>
       </template>
@@ -122,16 +122,16 @@
     <!-- 删除确认对话框 -->
     <el-dialog
       v-model="deleteDialogVisible"
-      title="确认删除"
+      title="delete"
       width="30%"
       :show-close="false"
     >
-      <span>确定要删除这条消息吗？此操作不可恢复。</span>
+      <span>confirm delete</span>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="deleteDialogVisible = false">取消</el-button>
+          <el-button @click="deleteDialogVisible = false">cancel</el-button>
           <el-button type="danger" @click="confirmDelete">
-            确认删除
+            delete!
           </el-button>
         </span>
       </template>

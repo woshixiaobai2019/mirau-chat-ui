@@ -1,6 +1,6 @@
 <template>
   <div class="chat-list-container">
-  <el-button class="new-chat-item" @click="showNewChatDialog = true" :icon="Plus" type="primary">新建对话</el-button>
+  <el-button class="new-chat-item" @click="showNewChatDialog = true" :icon="Plus" type="primary">New Chat</el-button>
     <!-- 聊天列表 -->
     <div class="chat-items">
       <!-- 新对话按钮 -->
@@ -32,7 +32,7 @@
                 <el-dropdown-menu>
                   <el-dropdown-item command="pin">
                     <el-icon><Top /></el-icon>
-                    置顶对话
+                    pin
                   </el-dropdown-item>
                   <!-- <el-dropdown-item command="archive">
                     <el-icon><Box /></el-icon>
@@ -40,7 +40,7 @@
                   </el-dropdown-item> -->
                   <el-dropdown-item command="delete" divided>
                     <el-icon><Delete /></el-icon>
-                    <span class="text-red-500">删除对话</span>
+                    <span class="text-red-500">delete</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -51,7 +51,7 @@
 
       <!-- 空状态 -->
       <div v-if="filteredChats.length === 0" class="empty-state">
-        <el-empty description="无聊天记录" />
+        <el-empty description="no chat history" />
       </div>
           <!-- 新对话弹窗 -->
     <NewChatDialog

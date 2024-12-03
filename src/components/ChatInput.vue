@@ -5,7 +5,7 @@
         ref="textareaRef"
         v-model="message"
         class="chat-textarea"
-        placeholder="发消息..."
+        placeholder="send msg..."
         :style="{ height: textareaHeight + 'px' }"
         @input="adjustHeight"
         @keydown.enter.prevent="handleSend"

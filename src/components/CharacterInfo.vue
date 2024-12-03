@@ -29,7 +29,7 @@
             <div class="upload-placeholder">
             <el-input
               v-model="characterConfig.avatar"
-              placeholder="请输入头像地址"
+              placeholder="input avatar url"
               resize="none"
               :maxlength="200"
               show-word-limit

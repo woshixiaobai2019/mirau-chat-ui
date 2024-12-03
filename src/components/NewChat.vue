@@ -10,7 +10,7 @@
     <div class="new-chat-form">
       <!-- 头像上传区域 -->
       <div class="avatar-section" >
-        <p class="section-title">选择头像</p>
+        <p class="section-title">set avatar</p>
           <div class="avatar-wrapper" v-if="avatarUrl" >
             <el-avatar 
               :size="60" 
@@ -21,7 +21,7 @@
             <div class="upload-placeholder">
             <el-input
               v-model="avatarUrl"
-              placeholder="请输入头像地址"
+              placeholder="input avatar url"
               resize="none"
               :maxlength="200"
               show-word-limit
@@ -32,10 +32,10 @@
 
       <!-- System Prompt 输入区域 -->
       <div class="prompt-section">
-        <p class="section-title">角色名称</p>
+        <p class="section-title">character name</p>
         <el-input
           v-model="name"
-          placeholder="请输入角色称呼"
+          placeholder="name"
           resize="none"
           :maxlength="20"
           show-word-limit
@@ -43,12 +43,12 @@
       </div>
             <!-- System Prompt 输入区域 -->
       <div class="prompt-section">
-        <p class="section-title">角色设定</p>
+        <p class="section-title">system prompt</p>
         <el-input
           v-model="systemPrompt"
           type="textarea"
           :rows="3"
-          placeholder="请描述这个AI助手的特点和行为方式..."
+          placeholder="input system prompt..."
           resize="none"
           :maxlength="500"
           show-word-limit
@@ -58,13 +58,13 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCancel">取消</el-button>
+        <el-button @click="handleCancel">cancel</el-button>
         <el-button 
           type="primary" 
           @click="handleConfirm"
           :disabled="!isValid"
         >
-          开始对话
+          start chat
         </el-button>
       </div>
     </template>
